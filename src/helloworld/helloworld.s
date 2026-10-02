@@ -6,12 +6,7 @@
 ; ~1200 Baud for 8 MHz crystal/2 MHz clock:
 BAUD1200    EQU     $33
 
-; Status Register Bit Mask
-TDRE        EQU   	$80       	; Transmit Data Register Empty flag mask
-
             ORG     $0000       ; Start of program (assume ROM/EPROM)
-
-            DB      $FF         ; Baud determinator prefix byte
             
 ; ----------------------------------------------------------------
 ; Main Program Initialization
@@ -36,17 +31,13 @@ MAIN        LDS     #$00FF      ; Initialize stack pointer
 AGAIN       LDY     #HELLOSTR
             LDAB    #HELLOSTREND - HELLOSTR
             
-SEND_STR    LDAA    $00,Y       ; Load character 'H' into Accumulator A
+SEND_STR    LDAA    $00,Y       ; Load next character into Accumulator A
             BSR     SCI_OUT     ; Call transmission subroutine
             INY                 ; Move Y to next character
             DECB                ; Decrement character count
             BNE     SEND_STR
 
             BRA     AGAIN       ; Infinite loop when finished
-            
-            LDAA    #$00        ; Disable transmitter (TE=0, RE=0)
-            STAA    SCCR2,X     ; (the BRA means we'll never get here)
-            STOP
 
 ; ----------------------------------------------------------------
 ; Subroutine: OUTCHAR
@@ -56,5 +47,6 @@ SCI_OUT     BRCLR   SCSR,X TDRE SCI_OUT  ; Poll SCSR until TDRE flag is 1
             STAA    SCDR,X          ; Write character to SCDR (clears TDRE)
             RTS                     ; Return from subroutine
 
-HELLOSTR:   DB      'Hello, world.\n\n'
-HELLOSTREND:DB      $0101 - * DUP ($FF)
+HELLOSTR    DB      'Hello, world.\n\n'
+HELLOSTREND DB      $00
+            DB      $0100 - * DUP ($FF)

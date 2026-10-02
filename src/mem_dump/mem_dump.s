@@ -6,9 +6,6 @@
 ; ~1200 Baud for 8 MHz crystal/2 MHz clock:
 BAUD1200    EQU     $33
 
-; Status Register Bit Mask
-TDRE        EQU   	$80       	; Transmit Data Register Empty flag mask
-
 ; Range of bytes to write
             IFNDEF WRTBYTEND
                 IFDEF WRTBYTBASE
@@ -22,8 +19,6 @@ WRTBYTBASE  EQU     $F800       ; Start of 2 KiB ROM
             ENDIF
 
             ORG     $0000       ; Start of program (assume ROM/EPROM)
-
-            DB      $FF         ; Baud indicator for MC ROM
             
 ; ----------------------------------------------------------------
 ; Main Program Initialization
@@ -109,4 +104,4 @@ SCI_OUT     BRCLR   SCSR,X TDRE SCI_OUT  ; Poll SCSR until TDRE flag is 1
             RTS                     ; Return from subroutine
 
 
-            DB      $0101 - * DUP ($FF)
+            DB      $0100 - * DUP ($FF)

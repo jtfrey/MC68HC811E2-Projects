@@ -64,3 +64,8 @@ PPROG       EQU     $3B         ; EPROM and EEPROM Programming and Control Regis
 HPRIO       EQU     $3C         ; Highest Priority I Bit Interrupt and Misc. Register
 INIT        EQU     $3D         ; RAM and I/O Mapping Register
 CONFIG      EQU     $3F         ; System Configuration Register
+
+
+; Status Register Bit Mask
+TDRE            EQU   	    $80       	        ; Transmit Data Register Empty flag mask
+RDRF            EQU   	    $20       	        ; Receive Data Register Full flag mask

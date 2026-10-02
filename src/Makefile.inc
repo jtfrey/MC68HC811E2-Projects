@@ -14,4 +14,5 @@ LDFLAGS =
 
 %.bin: %.p
 	$(LD) $(LDFLAGS) -o $@ $<
+	{ printf '\xFF'; cat $@; } > $@.fixed && mv $@.fixed $@
 
