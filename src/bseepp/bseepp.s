@@ -81,6 +81,24 @@ EEERASE         EQU     $04                     ; EEERASE = 0b00000100 (erase)
 EELAT           EQU     $02                     ; EELAT = 0b00000010 (latch)
 EEPGM           EQU     $01                     ; EEPGM = 0b00000001 (program)
 
+;
+; The following 16-bit constants can be loaded into the D
+; register before calling the DELAY subroutine.  In each instance
+; the delay lasts slightly longer than the nominal period to allow
+; for minor frequency deviations in the external oscillator.
+;
+DELAY_500US     EQU     $00A6                   ; 0x00A6 * 6 + 19 = 1015 cycles
+                                                ;                 = 507.5 µs
+DELAY_1MS       EQU     $014C                   ; 0x014C * 6 + 19 = 2011 cycles
+                                                ;                 = 1005.5 µs
+DELAY_5MS       EQU     $0682                   ; 0x0682 * 6 + 19 = 10015 cycles
+                                                ;                = 10007.5 µs
+DELAY_10MS      EQU     $0D04                   ; 0xD04 * 6 + 19 = 20011 cycles
+                                                ;                = 10005.5 µs
+DELAY_20MS      EQU     $1A0A                   ; 0x1A0A * 6 + 19 = 40015 cycles
+                                                ;                = 20007.5 µs
+DELAY_40MS      EQU     $3414                   ; 0x3414 * 6 + 19 = 80011 cycles
+                                                ;                = 40005.5 µs
 
                 ORG     $0000                   ; Start of program (page zero)
             
@@ -166,7 +184,8 @@ EEPROM_ERASE:   BCLR    BPROT, X EEUNPRTCTMSK   ; Clear bits on the segments of
                 STAB    $00, Y                  ; Write a single byte to trigger erase
                 ORAB    #EEPGM
                 STAB    PPROG, X                ; Programming voltage on
-                BSR     DELAY_10MS
+                LDD     #DELAY_10MS
+                BSR     DELAY
                 CLR     PPROG, X
                 
 RECEIVE_PAYLD:  LDAB    #EELAT
@@ -175,7 +194,8 @@ RECEIVE_PAYLD:  LDAB    #EELAT
                 STAA    $00, Y                  ; Write the byte to EEPROM
                 ORAB    #EEPGM
                 STAB    PPROG, X                ; Hold latch, enable EEPROM program voltage
-                BSR     DELAY_10MS              ; The EEPROM requires at least 10 ms
+                LDD     #DELAY_10MS
+                BSR     DELAY
                 CLR     PPROG, X                ; Drop latch, disable EEPROM program voltage
                 BSR     DOT_OUT                 ; Show that we processed the byte (dot on
                                                 ; serial Tx)
@@ -223,6 +243,21 @@ SCI_OUT         BRCLR   SCSR,X TDRE SCI_OUT     ; Poll SCSR until TDRE flag is 1
                 RTS
 
 ; ----------------------------------------------------------------
+; Subroutine: DELAY
+; The loop in this subroutine takes exactly 6 cycles per
+; iteration, with 19 cycles of overhead (an LDD and JSR outside
+; the subroutine and the XGDX and RTS in this subroutine).
+; Inputs:
+;     D:        the number of 6-cycle iterations
+; Clobbers the A and B registers.
+; ----------------------------------------------------------------
+DELAY:          XGDX                            ; [3] Move cycle count to X, save X in D
+DELAY_LOOP:     DEX                             ; [3] X--
+                BNE     DELAY_LOOP              ; [3] X == 0?
+                XGDX                            ; [3] Move original X back into X, D gets 0x0000
+                RTS                             ; [5]
+
+; ----------------------------------------------------------------
 ; Subroutine: ERROR_OUT
 ; Writes a standard error message out the SCI and halts the MCU.
 ; Inputs:
@@ -238,42 +273,6 @@ ERROR_OUT_PRFX  LDAA    $00, Y
 ERROR_OUT_CODE  TBA
                 BSR     SCI_OUT
                 STOP
-
-; ----------------------------------------------------------------
-; Subroutine: DELAY_10MS
-; The loop in this subroutine takes exactly 20035 cycles.  With
-; interrupts disabled and a 2 MHz Eclock, that's 10.0175 ms —
-; just enough time for the EEPROM to program a byte.
-; Inputs:
-;     None
-; Clobbers the A and B registers.
-; ----------------------------------------------------------------
-DELAY_10MS:     LDD     #$E100                  ; 3 (A = $E1[225], B = $00)
-                SEC                             ; 2
-                                                ; ==================
-DELAY_10MS_OUTR:RORB                            ; 2
-                                                ; ------------------
-DELAY_10MS_RS:  LSRB                            ; 2
-                BNE     DELAY_10MS_RS           ; 3
-                                                ;   = 5 * 8 = 40
-                                                ; ------------------
-                ROLB                            ; 2
-                                                ; ------------------
-DELAY_10MS_LS:  LSLB                            ; 2
-                BNE     DELAY_10MS_LS           ; 3
-                                                ;   = 5 * 8 = 40
-                                                ; ------------------
-                DECA                            ; 2
-                BNE     DELAY_10MS_OUTR         ; 3
-                                                ;   = 89 * 225 = 20025
-                                                ; ==================
-                RTS                             ; 5
-                                                ;   = 5 + 20025 + 5
-                                                ;   = 20035 cycles
-
-
-
-
 
 LOAD_ADDR       DW      $0000                   ; Initially receives the starting address
                                                 ; of the EEPROM load, then has the size

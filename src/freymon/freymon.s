@@ -4,7 +4,7 @@
             INCLUDE ../io_regs.s
 
 
-            ORG     $0000       ; Start of program (assume ROM/EPROM)
+            ORG     $0000       ; Start of program (assume ROM/EEPROM)
             
 ; ----------------------------------------------------------------
 ; Main Program Initialization
