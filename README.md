@@ -39,3 +39,14 @@ All programs written can be found in the [src](src/) directory.  The I/O registe
 
 Makefiles are used to guide the build of 257-byte binary files that can be uploaded to the MC68HC811E2 in bootstrap mode.  The [AS Macroassembler](http://john.ccac.rwth-aachen.de:8000/as/) is used to assemble the 6811 assembly code.
 
+## Making a PCB
+
+With the chip sitting on an unstable perfboard, my attention turned to what I could do to make this "toy" a bit more stable.  The official datasheet for the MC68HC11 series was loaded with information:  how to use the built-in EEPROM programming facilities (to program the upper 2 KiB of address space) and how to add RAM to the system using some of the i/o ports as address and data lines (to fill the other ca. 61 KiB of open address space).
+
+Over the course of about 6 months I read the docs, learned to use KiCad, and iterated through a schematic and a PCB layout for a board for that MC68HC811E2 MCU.  Header pins are present for a memory expansion bus (with demuxing of the shared address/data lines), the remaining analog and digital i/o ports, as well as the SPI and serial pins from the MCU.  A four-pin header (serial Rx/Tx, ground, +5V) are its iterface to the user:  a TTL UART serial-to-USB adapter provides the board's power and communications with my MacBook.
+
+After all those months of study and work, the completed v1.0.0 PCB was fabricated and I soldered the parts salvaged from the trash to it.  I connected the USB adapter and opened a terminal emulator.
+
+And it worked!  I mounted it inside an iPhone 13 box (perfect size).
+
+The KiCad design is in the [PCB](PCB/) directory, along with photos of the [printed boards](PCB/Finished-Boards.jpg) and the [final product](PCB/Final-Product.jpg).
